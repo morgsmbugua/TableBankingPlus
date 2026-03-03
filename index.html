@@ -976,7 +976,7 @@ const TXN_LABELS = {
   AI: 'Advance Issued',    AP: 'Advance Payment',
   LX: 'Loan Interest',     AX: 'Advance Interest'
 };
-const TXN_NEG = new Set(['SW', 'LI', 'AI', 'LX', 'AX']);
+const TXN_NEG = new Set(['SW', 'LI', 'AI']); // LX/AX increase debt — handled separately in display
 
 function openMemberModal(msId) {
   const ms = state.memberships.find(m => m.id === msId);
@@ -1030,13 +1030,30 @@ function renderMemberModalBody(container, msId) {
   );
   container.appendChild(sg);
 
-  // Record transaction
-  container.appendChild(el('div', { style: 'font-weight:700;font-size:14px;margin-bottom:12px' }, 'Record Transaction'));
+  // ── Section header with tabs ────────────────────────────────────────────────
+  const sectionHead = el('div', { style: 'margin-bottom:14px' },
+    el('div', { style: 'font-weight:700;font-size:14px;margin-bottom:10px' }, 'Record Transaction')
+  );
 
-  const txnSel = selectEl(TXN_LABELS, 'SD');
-  const amtInp = inputEl({ type: 'number', placeholder: '0.00', style: 'font-size:18px;font-weight:600;padding:10px 12px' });
+  // Tab buttons
+  const hasLoan = c.loan > 0;
+  const hasAdv  = c.adv  > 0;
+
+  const tabBar = el('div', { style: 'display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap' });
+  const tabStandard    = el('button', { class: 'btn btn-secondary btn-sm' }, 'Standard Entry');
+  const tabLoanRepay   = el('button', { class: 'btn btn-ghost btn-sm', style: hasLoan ? '' : 'display:none' }, 'Loan Repayment');
+  const tabAdvRepay    = el('button', { class: 'btn btn-ghost btn-sm', style: hasAdv  ? '' : 'display:none' }, 'Advance Repayment');
+  tabBar.append(tabStandard, tabLoanRepay, tabAdvRepay);
+
+  container.appendChild(sectionHead);
+  container.appendChild(tabBar);
+
+  // ── Panel 1: Standard entry ──────────────────────────────────────────────
+  const panelStandard = el('div', {});
+  const txnSel  = selectEl(TXN_LABELS, 'SD');
+  const amtInp  = inputEl({ type: 'number', placeholder: '0.00', style: 'font-size:18px;font-weight:600;padding:10px 12px' });
   const noteInp = inputEl({ placeholder: 'e.g. June contribution' });
-  const txnErr = el('div', { class: 'err', style: 'display:none' });
+  const txnErr  = el('div', { class: 'err', style: 'display:none' });
 
   const recordBtn = el('button', { class: 'btn btn-primary', style: 'width:100%' }, 'Record');
   recordBtn.addEventListener('click', () => {
@@ -1047,21 +1064,179 @@ function renderMemberModalBody(container, msId) {
     if (!amount || amount <= 0) { txnErr.textContent = 'Enter a valid amount.'; txnErr.style.display = ''; return; }
     if (type === 'LI' && amount > fc.maxLoan) { txnErr.textContent = 'Max loan is ' + fmt(fc.maxLoan) + ' (2.5× shares).'; txnErr.style.display = ''; return; }
     if (type === 'SW' && amount > fc.shares)  { txnErr.textContent = 'Withdrawal exceeds available shares.'; txnErr.style.display = ''; return; }
-
     freshMs.transactions.push({ id: uid(), date: new Date().toISOString(), type, amount, note: noteInp.value.trim() });
     saveState();
     renderMemberModalBody(document.getElementById('modal-body'), msId);
     document.getElementById('modal-box').scrollTop = 0;
   });
 
-  const txnForm = el('div', { style: 'display:flex;flex-direction:column;gap:12px;margin-bottom:24px' },
-    fieldEl('Type', txnSel),
-    fieldEl('Amount (KES)', amtInp),
-    fieldEl('Note (optional)', noteInp),
-    txnErr,
-    recordBtn
+  panelStandard.append(
+    el('div', { style: 'display:flex;flex-direction:column;gap:12px;margin-bottom:24px' },
+      fieldEl('Type', txnSel),
+      fieldEl('Amount (KES)', amtInp),
+      fieldEl('Note (optional)', noteInp),
+      txnErr,
+      recordBtn
+    )
   );
-  container.appendChild(txnForm);
+
+  // ── Panel 2: Loan repayment waterfall ────────────────────────────────────
+  function makeRepayPanel(debtType) {
+    const isLoan  = debtType === 'loan';
+    const payType = isLoan ? 'LP' : 'AP';
+    const debtBal = isLoan ? c.loan : c.adv;
+    const debtInt = isLoan ? c.loanInt : c.advInt;
+    const label   = isLoan ? 'Loan' : 'Advance';
+
+    const panel = el('div', {});
+
+    // Info strip showing current balance and interest due
+    panel.appendChild(el('div', { style: 'background:#fff8f0;border:1px solid #f0dcc8;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px' },
+      el('div', { style: 'display:flex;justify-content:space-between;margin-bottom:4px' },
+        el('span', { style: 'color:var(--muted)' }, label + ' Balance'),
+        el('b', {}, fmt(debtBal))
+      ),
+      el('div', { style: 'display:flex;justify-content:space-between' },
+        el('span', { style: 'color:var(--muted)' }, 'Interest due this month'),
+        el('b', { style: 'color:var(--orange)' }, fmt(debtInt))
+      )
+    ));
+
+    // Two separate inputs: savings and repayment
+    const savingsInp = inputEl({ type: 'number', placeholder: '0.00', style: 'font-size:16px;font-weight:600;padding:10px 12px' });
+    const repayInp   = inputEl({ type: 'number', placeholder: '0.00', style: 'font-size:16px;font-weight:600;padding:10px 12px' });
+    const noteInp2   = inputEl({ placeholder: 'e.g. March meeting' });
+    const repayErr   = el('div', { class: 'err', style: 'display:none' });
+
+    // Breakdown shown before confirming
+    const breakdown  = el('div', { style: 'display:none;flex-direction:column;gap:6px;background:var(--green-pale);border:1px solid var(--green-border);border-radius:8px;padding:12px 14px;font-size:13px' });
+    const applyBtn   = el('button', { class: 'btn btn-primary', style: 'width:100%;display:none' }, 'Confirm & Apply');
+
+    function bRow(icon, label, amount, color) {
+      return el('div', { style: 'display:flex;justify-content:space-between;align-items:center' },
+        el('span', {}, icon + ' ' + label),
+        el('b', { style: 'color:' + color }, fmt(amount))
+      );
+    }
+
+    function updateBreakdown() {
+      const savings = parseFloat(savingsInp.value) || 0;
+      const repay   = parseFloat(repayInp.value)   || 0;
+
+      breakdown.innerHTML = '';
+      repayErr.style.display = 'none';
+
+      if (savings <= 0 && repay <= 0) {
+        breakdown.style.display = 'none';
+        applyBtn.style.display = 'none';
+        return;
+      }
+
+      // Split repayment: interest first, then principal
+      const intPaid  = parseFloat(Math.min(repay, debtInt).toFixed(2));
+      const prinPaid = parseFloat(Math.min(Math.max(repay - intPaid, 0), debtBal).toFixed(2));
+      const newBal   = parseFloat(Math.max(debtBal - intPaid - prinPaid, 0).toFixed(2));
+
+      if (savings > 0) breakdown.appendChild(bRow('💰', 'Savings deposit', savings, 'var(--green)'));
+      if (intPaid > 0) breakdown.appendChild(bRow('📈', 'Interest payment', intPaid, 'var(--orange)'));
+      if (prinPaid > 0) breakdown.appendChild(bRow('🏦', 'Principal payment', prinPaid, 'var(--green)'));
+
+      // Divider + new balance
+      const divider = el('div', { style: 'border-top:1px solid var(--green-border);margin-top:4px;padding-top:8px;display:flex;justify-content:space-between;font-weight:700' },
+        el('span', {}, 'New ' + label + ' Balance'),
+        el('span', { style: 'color:' + (newBal > 0 ? 'var(--orange)' : 'var(--green)') }, fmt(newBal))
+      );
+      breakdown.appendChild(divider);
+
+      breakdown.style.display = 'flex';
+      applyBtn.style.display = '';
+    }
+
+    savingsInp.addEventListener('input', updateBreakdown);
+    repayInp.addEventListener('input',   updateBreakdown);
+
+    applyBtn.addEventListener('click', () => {
+      const savings = parseFloat(savingsInp.value) || 0;
+      const repay   = parseFloat(repayInp.value)   || 0;
+
+      if (savings <= 0 && repay <= 0) {
+        repayErr.textContent = 'Enter at least a savings or repayment amount.';
+        repayErr.style.display = '';
+        return;
+      }
+
+      const note    = noteInp2.value.trim();
+      const freshMs = state.memberships.find(m => m.id === msId);
+      const fc      = calcMs(freshMs);
+      const curInt  = isLoan ? fc.loanInt : fc.advInt;
+      const curBal  = isLoan ? fc.loan    : fc.adv;
+      const now     = new Date().toISOString();
+      const txns    = [];
+
+      // 1. Savings
+      if (savings > 0) {
+        txns.push({ id: uid(), date: now, type: 'SD', amount: savings,
+          note: (note || 'Savings') + ' — meeting day' });
+      }
+
+      // 2. Interest portion
+      const intPaid  = parseFloat(Math.min(repay, curInt).toFixed(2));
+      const prinPaid = parseFloat(Math.min(Math.max(repay - intPaid, 0), curBal).toFixed(2));
+
+      if (intPaid > 0) {
+        txns.push({ id: uid(), date: now, type: payType, amount: intPaid,
+          note: (note || 'Repayment') + ' — interest portion' });
+      }
+
+      // 3. Principal portion
+      if (prinPaid > 0) {
+        txns.push({ id: uid(), date: now, type: payType, amount: prinPaid,
+          note: (note || 'Repayment') + ' — principal portion' });
+      }
+
+      for (const t of txns) freshMs.transactions.push(t);
+      saveState();
+      renderMemberModalBody(document.getElementById('modal-body'), msId);
+      document.getElementById('modal-box').scrollTop = 0;
+    });
+
+    panel.append(
+      el('div', { style: 'display:flex;flex-direction:column;gap:12px;margin-bottom:24px' },
+        fieldEl('Savings Amount (KES)', savingsInp),
+        fieldEl('Repayment Amount (KES)', repayInp),
+        breakdown,
+        fieldEl('Note (optional)', noteInp2),
+        repayErr,
+        applyBtn
+      )
+    );
+    return panel;
+  }
+
+  const panelLoan = makeRepayPanel('loan');
+  const panelAdv  = makeRepayPanel('advance');
+
+  // ── Tab switching ─────────────────────────────────────────────────────────
+  const allTabs   = [tabStandard, tabLoanRepay, tabAdvRepay];
+  const allPanels = [panelStandard, panelLoan, panelAdv];
+
+  function switchTab(idx) {
+    allTabs.forEach((t, i) => {
+      t.className = i === idx ? 'btn btn-secondary btn-sm' : 'btn btn-ghost btn-sm';
+      if (i === 1 && !hasLoan) t.style.display = 'none';
+      if (i === 2 && !hasAdv)  t.style.display = 'none';
+    });
+    allPanels.forEach((p, i) => p.style.display = i === idx ? '' : 'none');
+  }
+
+  tabStandard.addEventListener('click',  () => switchTab(0));
+  tabLoanRepay.addEventListener('click', () => switchTab(1));
+  tabAdvRepay.addEventListener('click',  () => switchTab(2));
+
+  // Show panels
+  allPanels.forEach(p => container.appendChild(p));
+  // Default: show repayment tab if there's a loan, otherwise standard
+  switchTab(hasLoan ? 1 : (hasAdv ? 2 : 0));
 
   // Transaction history
   const txns = ms.transactions;
@@ -1078,7 +1253,11 @@ function renderMemberModalBody(container, msId) {
         el('div', { class: 'txn-type' }, TXN_LABELS[t.type]),
         el('div', { class: 'txn-date' }, fmtDate(t.date) + (t.note ? ' · ' + t.note : ''))
       );
-      const amtEl = el('span', { class: 'txn-amount ' + (neg ? 'txn-neg' : 'txn-pos') },
+      // Interest txns increase debt: show as + in orange to distinguish from income
+      const isInt = t.type === 'LX' || t.type === 'AX';
+      const amtClass = neg ? 'txn-neg' : (isInt ? '' : 'txn-pos');
+      const amtColor = isInt ? 'color:var(--orange)' : '';
+      const amtEl = el('span', { class: 'txn-amount ' + amtClass, style: amtColor },
         (neg ? '−' : '+') + fmt(t.amount).replace('KES ', '')
       );
       const del = makeTrashBtn('Delete transaction', () => {

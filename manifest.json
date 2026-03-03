@@ -1,7 +1,7 @@
 {
-  "name": "Table Banking Plus",
-  "short_name": "TableBanking+",
-  "description": "Groups' Table Banking Finance Manager",
+  "name": "TableBank",
+  "short_name": "TableBank",
+  "description": "Group Table Banking Finance Manager",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f5f5f0",
