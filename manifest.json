@@ -1,6 +1,6 @@
 {
-  "name": "Table Banking Plus",
-  "short_name": "TableBanking+",
+  "name": "Table Bank",
+  "short_name": "TableBank",
   "description": "Groups' Table Banking Finance Manager",
   "start_url": "./index.html",
   "display": "standalone",
@@ -21,6 +21,6 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["finance", "productivity", "management"],
+  "categories": ["finance", "productivity", "management", "banking"],
   "lang": "en-KE"
 }
