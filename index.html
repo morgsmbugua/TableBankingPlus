@@ -725,12 +725,12 @@ function renderGroupPage(gid) {
       );
       lCol.addEventListener('click', () => openMemberModal(msId));
       right.appendChild(lCol);
-      const liCol = el('div', { style: 'text-align:right;cursor:pointer' },
-        el('div', { class: 'row-stat-label' }, 'Loan Int/mo'),
-        el('div', { class: 'row-stat-value', style: 'color:var(--orange);font-size:13px' }, fmt(c.loanInt))
+      const lnCol = el('div', { style: 'text-align:right;cursor:pointer' },
+        el('div', { class: 'row-stat-label' }, 'Next Month Due'),
+        el('div', { class: 'row-stat-value', style: 'color:var(--red);font-size:13px' }, fmt(c.loan + c.loanInt))
       );
-      liCol.addEventListener('click', () => openMemberModal(msId));
-      right.appendChild(liCol);
+      lnCol.addEventListener('click', () => openMemberModal(msId));
+      right.appendChild(lnCol);
     }
     if (c.adv > 0) {
       const aCol = el('div', { style: 'text-align:right;cursor:pointer' },
@@ -739,12 +739,12 @@ function renderGroupPage(gid) {
       );
       aCol.addEventListener('click', () => openMemberModal(msId));
       right.appendChild(aCol);
-      const aiCol = el('div', { style: 'text-align:right;cursor:pointer' },
-        el('div', { class: 'row-stat-label' }, 'Adv Int/mo'),
-        el('div', { class: 'row-stat-value', style: 'color:var(--purple);font-size:13px' }, fmt(c.advInt))
+      const anCol = el('div', { style: 'text-align:right;cursor:pointer' },
+        el('div', { class: 'row-stat-label' }, 'Next Month Due'),
+        el('div', { class: 'row-stat-value', style: 'color:var(--red);font-size:13px' }, fmt(c.adv + c.advInt))
       );
-      aiCol.addEventListener('click', () => openMemberModal(msId));
-      right.appendChild(aiCol);
+      anCol.addEventListener('click', () => openMemberModal(msId));
+      right.appendChild(anCol);
     }
 
     right.appendChild(trashBtn);
@@ -1029,12 +1029,15 @@ function renderMemberModalBody(container, msId) {
   infoBox.append(infoLeft, removeBtn);
   container.appendChild(infoBox);
 
-  // Stats (update after Record)
+  // Stats — recalculate fresh each render so Record always shows updated values
+  const loanNextMonth = c.loan > 0 ? c.loan + c.loanInt : 0;
+  const advNextMonth  = c.adv  > 0 ? c.adv  + c.advInt  : 0;
+
   const sg = el('div', { class: 'stat-grid' },
     statBox('Total Shares',    fmt(c.shares),  'Max loan: ' + fmt(c.maxLoan)),
-    statBox('Loan Balance',    fmt(c.loan),    c.loan > 0 ? 'Interest: ' + fmt(c.loanInt) + '/mo' : 'No active loan'),
-    statBox('Advance Balance', fmt(c.adv),     c.adv > 0 ? 'Interest: ' + fmt(c.advInt)  + '/mo' : 'No active advance'),
-    statBox('Total Interest',  fmt(c.loanInt + c.advInt), 'Per month')
+    statBox('Loan Balance',    fmt(c.loan),    c.loan > 0 ? 'Next month due: ' + fmt(loanNextMonth) : 'No active loan'),
+    statBox('Advance Balance', fmt(c.adv),     c.adv  > 0 ? 'Next month due: ' + fmt(advNextMonth)  : 'No active advance'),
+    statBox('Monthly Interest', fmt(c.loanInt + c.advInt), 'Loan: ' + fmt(c.loanInt) + ' · Adv: ' + fmt(c.advInt))
   );
   container.appendChild(sg);
 
@@ -1048,16 +1051,21 @@ function renderMemberModalBody(container, msId) {
 
   const recordBtn = el('button', { class: 'btn btn-primary', style: 'width:100%' }, 'Record');
   recordBtn.addEventListener('click', () => {
+    // Re-read fresh calc at click time so validations are always current
+    const freshMs = state.memberships.find(m => m.id === msId);
+    const fc = calcMs(freshMs);
     const type = txnSel.value;
     const amount = parseFloat(amtInp.value);
     if (!amount || amount <= 0) { txnErr.textContent = 'Enter a valid amount.'; txnErr.style.display = ''; return; }
-    if (type === 'LI' && amount > c.maxLoan) { txnErr.textContent = 'Max loan is ' + fmt(c.maxLoan) + ' (2.5× shares).'; txnErr.style.display = ''; return; }
-    if (type === 'SW' && amount > c.shares)  { txnErr.textContent = 'Withdrawal exceeds available shares.'; txnErr.style.display = ''; return; }
+    if (type === 'LI' && amount > fc.maxLoan) { txnErr.textContent = 'Max loan is ' + fmt(fc.maxLoan) + ' (2.5× shares).'; txnErr.style.display = ''; return; }
+    if (type === 'SW' && amount > fc.shares)  { txnErr.textContent = 'Withdrawal exceeds available shares.'; txnErr.style.display = ''; return; }
 
-    const target = state.memberships.find(m => m.id === msId);
-    target.transactions.push({ id: uid(), date: new Date().toISOString(), type, amount, note: noteInp.value.trim() });
+    freshMs.transactions.push({ id: uid(), date: new Date().toISOString(), type, amount, note: noteInp.value.trim() });
     saveState();
+    // Re-render and scroll modal back to top so updated stats are visible
     renderMemberModalBody(container, msId);
+    const modalBox = document.getElementById('modal-box');
+    if (modalBox) modalBox.scrollTop = 0;
   });
 
   const txnForm = el('div', { style: 'display:flex;flex-direction:column;gap:12px;margin-bottom:24px' },
