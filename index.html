@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- BUILD: 20260303221137 -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Table Banking Plus</title>
+  <title>TableBank</title>
   <meta name="description" content="Group Table Banking Finance Manager" />
   <meta name="theme-color" content="#2d6a4f" />
   <link rel="manifest" href="manifest.json" />
@@ -270,13 +271,13 @@
 <div id="header">
   <div id="header-inner">
     <div id="logo" onclick="navigate('groups')">
-      <div id="logo-title">Table Banking Plus</div>
-      <div id="logo-sub">Groups' Finance Manager</div>
+      <div id="logo-title">TableBank</div>
+      <div id="logo-sub">Group Finance Manager</div>
     </div>
     <div id="nav">
       <button class="nav-btn" data-nav="groups"  onclick="navigate('groups')">Groups</button>
       <button class="nav-btn" data-nav="search"  onclick="navigate('search')">Search</button>
-      <button class="nav-btn" data-nav="totals"  onclick="navigate('totals')">Totals</button>
+      <button class="nav-btn" data-nav="totals"  onclick="navigate('totals')">All Totals</button>
     </div>
   </div>
 </div>
@@ -296,7 +297,7 @@
 
 <!-- Install banner -->
 <div id="install-banner">
-  <span>Install TableBankingPlus</span>
+  <span>Install TableBank for offline use</span>
   <button id="install-yes">Install</button>
   <button id="install-no">×</button>
 </div>
@@ -331,10 +332,55 @@ function calcMs(ms) {
     if (t.type === 'AI') adv    += t.amount;
     if (t.type === 'AP') adv    -= t.amount;
     if (t.type === 'AX') adv    += t.amount; // advance interest added to balance
+    if (t.type === 'DV') shares += t.amount; // dividend added to shares (if chosen)
   }
   const loanInt = loan > 0 ? loan * LOAN_INT : 0;
   const advInt  = adv  > 0 ? adv  * ADV_INT  : 0;
   return { shares, loan, adv, loanInt, advInt, maxLoan: shares * LOAN_MULT };
+}
+
+// ── Dividend helpers ──────────────────────────────────────────────────────────
+// Interest collected in a year = all LX + AX transactions charged that year
+// (these represent actual interest the group earned on its loans/advances)
+function groupInterestCollected(gid, year) {
+  let total = 0;
+  for (const ms of state.memberships.filter(m => m.gid === gid)) {
+    for (const t of ms.transactions) {
+      if ((t.type === 'LX' || t.type === 'AX') && new Date(t.date).getFullYear() === year) {
+        total += t.amount;
+      }
+    }
+  }
+  return total;
+}
+
+function calcMemberDividend(msId, gid, year) {
+  const ms = state.memberships.find(m => m.id === msId);
+  if (!ms) return 0;
+  // Member's shares as of end of that year
+  const yearEnd = new Date(year, 11, 31, 23, 59, 59);
+  let shares = 0;
+  for (const t of ms.transactions) {
+    if (new Date(t.date) <= yearEnd) {
+      if (t.type === 'SD') shares += t.amount;
+      if (t.type === 'SW') shares -= t.amount;
+      if (t.type === 'DV') shares += t.amount;
+    }
+  }
+  // Total group shares as of end of that year
+  let totalShares = 0;
+  for (const m of state.memberships.filter(m => m.gid === gid)) {
+    for (const t of m.transactions) {
+      if (new Date(t.date) <= yearEnd) {
+        if (t.type === 'SD') totalShares += t.amount;
+        if (t.type === 'SW') totalShares -= t.amount;
+        if (t.type === 'DV') totalShares += t.amount;
+      }
+    }
+  }
+  if (totalShares <= 0 || shares <= 0) return 0;
+  const pool = groupInterestCollected(gid, year);
+  return parseFloat(((shares / totalShares) * pool).toFixed(2));
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -663,6 +709,7 @@ function renderGroupPage(gid) {
     ),
     el('div', { class: 'flex-row' },
       el('button', { class: 'btn btn-danger btn-sm', onclick: () => confirmDeleteGroup(gid) }, 'Delete Group'),
+      el('button', { class: 'btn btn-secondary btn-sm', onclick: () => openDividendModal(gid) }, '🎁 Dividends'),
       el('button', { class: 'btn btn-primary', onclick: () => openAddMemberModal(gid) }, '+ Add Member')
     )
   );
@@ -974,7 +1021,8 @@ const TXN_LABELS = {
   SD: 'Shares Deposit',    SW: 'Shares Withdrawal',
   LI: 'Loan Issued',       LP: 'Loan Payment',
   AI: 'Advance Issued',    AP: 'Advance Payment',
-  LX: 'Loan Interest',     AX: 'Advance Interest'
+  LX: 'Loan Interest',     AX: 'Advance Interest',
+  DV: 'Dividend'
 };
 const TXN_NEG = new Set(['SW', 'LI', 'AI']); // LX/AX increase debt — handled separately in display
 
@@ -1339,6 +1387,172 @@ document.getElementById('install-no').addEventListener('click', () => {
 window.addEventListener('appinstalled', () => {
   document.getElementById('install-banner').classList.remove('show');
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DIVIDEND MODAL
+// ─────────────────────────────────────────────────────────────────────────────
+function openDividendModal(gid) {
+  const g = state.groups[gid];
+  const currentYear = new Date().getFullYear();
+  const years = [];
+  // Collect all years that have interest transactions
+  for (const ms of state.memberships.filter(m => m.gid === gid)) {
+    for (const t of ms.transactions) {
+      if (t.type === 'LX' || t.type === 'AX') {
+        const y = new Date(t.date).getFullYear();
+        if (!years.includes(y)) years.push(y);
+      }
+    }
+  }
+  if (!years.includes(currentYear)) years.push(currentYear);
+  years.sort((a, b) => b - a);
+
+  const body = el('div', { style: 'display:flex;flex-direction:column;gap:16px' });
+
+  // Year selector
+  const yearSel = selectEl(Object.fromEntries(years.map(y => [y, y + ' Dividends'])), String(currentYear));
+  body.appendChild(fieldEl('Year', yearSel));
+
+  // Dividend preview table
+  const preview = el('div', {});
+  body.appendChild(preview);
+
+  function renderDividendPreview() {
+    preview.innerHTML = '';
+    const year = parseInt(yearSel.value);
+    const pool = groupInterestCollected(gid, year);
+    const members = state.memberships
+      .filter(ms => ms.gid === gid)
+      .sort((a, b) => {
+        const na = isNaN(a.memberNo) ? a.memberNo : Number(a.memberNo);
+        const nb = isNaN(b.memberNo) ? b.memberNo : Number(b.memberNo);
+        return typeof na === 'number' && typeof nb === 'number' ? na - nb : String(na).localeCompare(String(nb));
+      });
+
+    // Pool summary
+    preview.appendChild(el('div', { style: 'background:#fff8f0;border:1px solid #f0dcc8;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px' },
+      el('div', { style: 'display:flex;justify-content:space-between;margin-bottom:4px' },
+        el('span', { style: 'color:var(--muted)' }, 'Total interest collected in ' + year),
+        el('b', { style: 'color:var(--orange)' }, fmt(pool))
+      ),
+      el('div', { style: 'display:flex;justify-content:space-between' },
+        el('span', { style: 'color:var(--muted)' }, 'To be distributed to ' + members.length + ' members')
+      )
+    ));
+
+    if (pool <= 0) {
+      preview.appendChild(el('div', { style: 'color:var(--muted);font-size:13px;text-align:center;padding:16px' },
+        'No interest collected in ' + year + '. No dividends to distribute.'));
+      return;
+    }
+
+    // Per-member dividend table
+    const table = el('div', { style: 'display:flex;flex-direction:column;gap:8px;margin-bottom:16px' });
+    const memberDivs = members.map(ms => {
+      const mem = state.members[ms.mid];
+      const div = calcMemberDividend(ms.id, gid, year);
+      return { ms, mem, div };
+    });
+
+    for (const { ms, mem, div } of memberDivs) {
+      if (!mem) continue;
+      // Check if dividend already paid this year
+      const alreadyPaid = ms.transactions.some(t =>
+        t.type === 'DV' && new Date(t.date).getFullYear() === year
+      );
+      const row = el('div', { style: 'background:var(--white);border:1.5px solid ' + (alreadyPaid ? 'var(--green-border)' : 'var(--border)') + ';border-radius:8px;padding:12px 14px' });
+      const top = el('div', { style: 'display:flex;justify-content:space-between;align-items:center' },
+        el('div', {},
+          el('div', { style: 'font-weight:600' }, mem.name),
+          el('div', { style: 'font-size:12px;color:var(--muted)' }, '#' + ms.memberNo)
+        ),
+        el('div', { style: 'text-align:right' },
+          el('div', { style: 'font-weight:700;font-size:16px;color:var(--green)' }, fmt(div)),
+          alreadyPaid
+            ? el('div', { style: 'font-size:11px;color:var(--green);font-weight:600' }, '✓ Already paid')
+            : el('div', { style: 'font-size:11px;color:var(--muted)' }, 'Not yet paid')
+        )
+      );
+      row.appendChild(top);
+
+      if (!alreadyPaid && div > 0) {
+        const btnRow = el('div', { style: 'display:flex;gap:8px;margin-top:10px' });
+        const btnShares = el('button', { class: 'btn btn-secondary btn-sm' }, 'Add to Shares');
+        const btnCash   = el('button', { class: 'btn btn-ghost btn-sm' }, 'Cash Payout');
+
+        const applyDiv = (addToShares) => {
+          const freshMs = state.memberships.find(m => m.id === ms.id);
+          freshMs.transactions.push({
+            id: uid(),
+            date: new Date(year, 11, 31).toISOString(),
+            type: 'DV',
+            amount: addToShares ? div : 0,
+            note: year + ' dividend — ' + fmt(div) + (addToShares ? ' added to shares' : ' paid as cash')
+          });
+          // If cash, record as shares withdrawal so balance stays correct
+          if (!addToShares) {
+            freshMs.transactions.push({
+              id: uid(),
+              date: new Date(year, 11, 31).toISOString(),
+              type: 'SW',
+              amount: 0,
+              note: year + ' dividend cash payout — ' + fmt(div)
+            });
+          }
+          saveState();
+          renderDividendPreview();
+          renderPage();
+        };
+
+        btnShares.addEventListener('click', () => applyDiv(true));
+        btnCash.addEventListener('click',   () => applyDiv(false));
+        btnRow.append(btnShares, btnCash);
+        row.appendChild(btnRow);
+      }
+      table.appendChild(row);
+    }
+    preview.appendChild(table);
+
+    // Pay all button
+    const allPaid = memberDivs.every(({ ms, div }) =>
+      div <= 0 || ms.transactions.some(t => t.type === 'DV' && new Date(t.date).getFullYear() === parseInt(yearSel.value))
+    );
+    if (!allPaid) {
+      const payAllRow = el('div', { style: 'display:flex;gap:8px' });
+      const payAllShares = el('button', { class: 'btn btn-primary', style: 'flex:1' }, 'Add All to Shares');
+      const payAllCash   = el('button', { class: 'btn btn-secondary', style: 'flex:1' }, 'All as Cash');
+      payAllShares.addEventListener('click', () => {
+        const yr = parseInt(yearSel.value);
+        for (const { ms, div } of memberDivs) {
+          if (div <= 0) continue;
+          if (ms.transactions.some(t => t.type === 'DV' && new Date(t.date).getFullYear() === yr)) continue;
+          const freshMs = state.memberships.find(m => m.id === ms.id);
+          freshMs.transactions.push({ id: uid(), date: new Date(yr, 11, 31).toISOString(),
+            type: 'DV', amount: div, note: yr + ' dividend — ' + fmt(div) + ' added to shares' });
+        }
+        saveState(); renderDividendPreview(); renderPage();
+      });
+      payAllCash.addEventListener('click', () => {
+        const yr = parseInt(yearSel.value);
+        for (const { ms, div } of memberDivs) {
+          if (div <= 0) continue;
+          if (ms.transactions.some(t => t.type === 'DV' && new Date(t.date).getFullYear() === yr)) continue;
+          const freshMs = state.memberships.find(m => m.id === ms.id);
+          freshMs.transactions.push({ id: uid(), date: new Date(yr, 11, 31).toISOString(),
+            type: 'DV', amount: 0, note: yr + ' dividend — ' + fmt(div) + ' paid as cash' });
+        }
+        saveState(); renderDividendPreview(); renderPage();
+      });
+      payAllRow.append(payAllShares, payAllCash);
+      preview.appendChild(payAllRow);
+    }
+  }
+
+  yearSel.addEventListener('change', renderDividendPreview);
+  renderDividendPreview();
+
+  openModal('Dividends — ' + g.name, body);
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // BOOT
