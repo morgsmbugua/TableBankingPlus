@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TableBank</title>
+  <meta name="description" content="Group Table Banking Finance Manager" />
+  <meta name="theme-color" content="#2d6a4f" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green: #2d6a4f;
+      --green-light: #95d5b2;
+      --green-pale: #f7faf8;
+      --green-border: #e8f0ec;
+      --red: #c0392b;
+      --orange: #e67e22;
+      --purple: #8e44ad;
+      --bg: #f5f5f0;
+      --white: #ffffff;
+      --border: #e8e8e8;
+      --text: #1a1a1a;
+      --muted: #888888;
+      --radius: 10px;
+    }
+
+    body {
+      font-family: 'Outfit', 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* Header */
+    #header {
+      background: var(--green);
+      padding: 0 20px;
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      box-shadow: 0 2px 8px #0002;
+    }
+    #header-inner {
+      max-width: 860px;
+      margin: 0 auto;
+      height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    #logo { cursor: pointer; }
+    #logo-title { color: #fff; font-weight: 700; font-size: 18px; letter-spacing: -0.01em; }
+    #logo-sub { color: var(--green-light); font-size: 11px; margin-top: -2px; }
+
+    #nav { display: flex; gap: 4px; }
+    .nav-btn {
+      background: transparent;
+      color: #b7e4c7;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 13px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+    .nav-btn.active { background: #fff; color: var(--green); }
+
+    /* Content */
+    #content { max-width: 860px; margin: 0 auto; padding: 24px 16px; }
+
+    /* Cards */
+    .card {
+      background: var(--white);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 22px;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 6px;
+      padding: 9px 18px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      letter-spacing: 0.02em;
+      border: none;
+      transition: opacity 0.15s;
+    }
+    .btn:hover { opacity: 0.84; }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-primary   { background: var(--green); color: #fff; }
+    .btn-secondary { background: var(--white); color: var(--green); border: 1.5px solid var(--green); }
+    .btn-danger    { background: var(--white); color: var(--red);   border: 1.5px solid var(--red); }
+    .btn-ghost     { background: transparent; color: var(--muted); }
+    .btn-sm        { padding: 6px 12px; font-size: 12px; }
+    .btn-icon {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #ccc;
+      padding: 4px 6px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      transition: color 0.15s;
+      font-size: 14px;
+    }
+    .btn-icon:hover { color: var(--red); }
+
+    /* Inputs */
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field label { font-size: 12px; font-weight: 600; color: #555; letter-spacing: 0.05em; text-transform: uppercase; }
+    .field input, .field select, .field textarea {
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      padding: 9px 12px;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      background: #fafafa;
+      transition: border-color 0.15s;
+    }
+    .field input:focus, .field select:focus { border-color: var(--green); }
+    .field .err { color: var(--red); font-size: 13px; }
+
+    /* Stat boxes */
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); gap: 10px; margin-bottom: 24px; }
+    .stat-box { background: var(--green-pale); border: 1px solid var(--green-border); border-radius: 8px; padding: 14px 16px; }
+    .stat-label { font-size: 11px; color: var(--muted); font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 4px; }
+    .stat-value { font-size: 18px; font-weight: 700; color: var(--text); }
+    .stat-sub   { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    /* Page headings */
+    .page-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 22px; flex-wrap: wrap; gap: 12px; }
+    .page-title { font-size: 22px; font-weight: 700; }
+    .page-sub   { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+    /* Back link */
+    .back-link {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: none; border: none; cursor: pointer;
+      color: var(--muted); font-size: 13px; font-weight: 500;
+      font-family: inherit; padding: 0; margin-bottom: 8px;
+      transition: color 0.15s;
+    }
+    .back-link:hover { color: var(--green); }
+
+    /* Group / member rows */
+    .row {
+      background: var(--white);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      cursor: pointer;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .row:hover { border-color: #2d6a4f40; box-shadow: 0 2px 10px #2d6a4f0d; }
+    .row-left { flex: 1; }
+    .row-name { font-weight: 700; font-size: 15px; }
+    .row-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .row-right { display: flex; align-items: center; gap: 16px; }
+    .row-stat-label { font-size: 11px; color: #aaa; }
+    .row-stat-value { font-weight: 700; font-size: 14px; }
+
+    /* Txn history */
+    .txn-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 12px; background: #f9fafb; border-radius: 6px; font-size: 13px;
+      gap: 8px;
+    }
+    .txn-type { font-weight: 600; }
+    .txn-date { color: #aaa; font-size: 11px; margin-top: 1px; }
+    .txn-amount { font-weight: 700; }
+    .txn-pos { color: var(--green); }
+    .txn-neg { color: var(--red); }
+
+    /* Modal */
+    #modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: #00000048;
+      z-index: 500;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    #modal-overlay.open { display: flex; }
+    #modal-box {
+      background: var(--white);
+      border-radius: 12px;
+      padding: 26px 28px;
+      min-width: 320px;
+      max-width: 480px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px #0003;
+    }
+    #modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    #modal-title { font-size: 16px; font-weight: 700; }
+    #modal-close { background: none; border: none; font-size: 22px; cursor: pointer; color: #bbb; line-height: 1; padding: 0; }
+    #modal-body { display: flex; flex-direction: column; gap: 14px; }
+
+    .flex-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .flex-end { justify-content: flex-end; }
+    .mt-8 { margin-top: 8px; }
+    .mt-16 { margin-top: 16px; }
+    .mt-24 { margin-top: 24px; }
+    .mb-12 { margin-bottom: 12px; }
+    .gap-8 { gap: 8px; }
+
+    /* Empty state */
+    .empty { text-align: center; padding: 52px 24px; color: #bbb; }
+    .empty-icon { font-size: 42px; margin-bottom: 10px; }
+    .empty-title { font-weight: 600; font-size: 15px; color: #aaa; }
+    .empty-sub { font-size: 13px; margin-top: 4px; }
+
+    /* Badge */
+    .badge {
+      display: inline-block;
+      border-radius: 4px; padding: 2px 8px;
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.04em; text-transform: uppercase;
+    }
+
+    /* Chevron */
+    .chevron { color: #ccc; display: flex; align-items: center; }
+
+    /* Install banner */
+    #install-banner {
+      display: none;
+      position: fixed;
+      bottom: 16px; left: 50%; transform: translateX(-50%);
+      background: var(--green); color: #fff;
+      border-radius: 10px; padding: 12px 20px;
+      display: none; align-items: center; gap: 12px;
+      box-shadow: 0 4px 20px #0003;
+      z-index: 300; font-size: 14px; font-weight: 500;
+      max-width: calc(100vw - 32px);
+    }
+    #install-banner.show { display: flex; }
+    #install-yes { background: #fff; color: var(--green); border: none; border-radius: 6px; padding: 6px 14px; font-weight: 700; cursor: pointer; font-size: 13px; font-family: inherit; }
+    #install-no  { background: none; border: none; color: #b7e4c7; cursor: pointer; font-size: 20px; line-height: 1; }
+
+    /* Scrollbar */
+    .scroll-list { max-height: 260px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+    .scroll-list::-webkit-scrollbar { width: 4px; }
+    .scroll-list::-webkit-scrollbar-thumb { background: #ddd; border-radius: 4px; }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<div id="header">
+  <div id="header-inner">
+    <div id="logo" onclick="navigate('groups')">
+      <div id="logo-title">TableBank</div>
+      <div id="logo-sub">Group Finance Manager</div>
+    </div>
+    <div id="nav">
+      <button class="nav-btn" data-nav="groups"  onclick="navigate('groups')">Groups</button>
+      <button class="nav-btn" data-nav="search"  onclick="navigate('search')">Search</button>
+      <button class="nav-btn" data-nav="totals"  onclick="navigate('totals')">All Totals</button>
+    </div>
+  </div>
+</div>
+
+<div id="content"></div>
+
+<!-- Modal -->
+<div id="modal-overlay" onclick="closeModal(event)">
+  <div id="modal-box" onclick="event.stopPropagation()">
+    <div id="modal-header">
+      <div id="modal-title"></div>
+      <button id="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<!-- Install banner -->
+<div id="install-banner">
+  <span>Install TableBank for offline use</span>
+  <button id="install-yes">Install</button>
+  <button id="install-no">×</button>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// DATA
+// ─────────────────────────────────────────────────────────────────────────────
+const LOAN_INT = 0.015;
+const ADV_INT  = 0.10;
+const LOAN_MULT = 2.5;
+
+function loadState() {
+  try { return JSON.parse(localStorage.getItem('tb_v2')) || emptyState(); } catch { return emptyState(); }
+}
+function emptyState() { return { groups: {}, members: {}, memberships: [] }; }
+function saveState() { localStorage.setItem('tb_v2', JSON.stringify(state)); }
+
+let state = loadState();
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CALC
+// ─────────────────────────────────────────────────────────────────────────────
+function calcMs(ms) {
+  let shares = 0, loan = 0, adv = 0;
+  for (const t of ms.transactions) {
+    if (t.type === 'SD') shares += t.amount;
+    if (t.type === 'SW') shares -= t.amount;
+    if (t.type === 'LI') loan   += t.amount;
+    if (t.type === 'LP') loan   -= t.amount;
+    if (t.type === 'LX') loan   += t.amount; // loan interest added to balance
+    if (t.type === 'AI') adv    += t.amount;
+    if (t.type === 'AP') adv    -= t.amount;
+    if (t.type === 'AX') adv    += t.amount; // advance interest added to balance
+  }
+  const loanInt = loan > 0 ? loan * LOAN_INT : 0;
+  const advInt  = adv  > 0 ? adv  * ADV_INT  : 0;
+  return { shares, loan, adv, loanInt, advInt, maxLoan: shares * LOAN_MULT };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AUTO INTEREST ACCRUAL
+// Runs on load. For each membership with an active loan or advance, checks how
+// many full calendar months have elapsed since the last interest transaction
+// (or since the loan was first issued if no interest has been applied yet),
+// then inserts one LX/AX transaction per missed month at the balance that
+// existed at the START of that month.
+// ─────────────────────────────────────────────────────────────────────────────
+function applyMonthlyInterest() {
+  const now = new Date();
+  // Work in UTC-like month arithmetic: year*12 + month index
+  const toMonthIdx = d => d.getFullYear() * 12 + d.getMonth();
+  const nowIdx = toMonthIdx(now);
+  let changed = false;
+
+  for (const ms of state.memberships) {
+    // Process loan interest
+    changed = accrueInterest(ms, 'LI', 'LP', 'LX', LOAN_INT, nowIdx, toMonthIdx) || changed;
+    // Process advance interest
+    changed = accrueInterest(ms, 'AI', 'AP', 'AX', ADV_INT,  nowIdx, toMonthIdx) || changed;
+  }
+
+  if (changed) {
+    saveState();
+    console.log('[TableBank] Monthly interest applied and saved.');
+  }
+}
+
+function accrueInterest(ms, issueType, payType, intType, rate, nowIdx, toMonthIdx) {
+  // Find first issue transaction
+  const firstIssue = ms.transactions.find(t => t.type === issueType);
+  if (!firstIssue) return false;
+
+  // Find the last interest transaction already applied
+  const lastInt = [...ms.transactions].reverse().find(t => t.type === intType);
+
+  // The month AFTER the last interest applied, or the month AFTER issuance
+  const startDate = lastInt ? new Date(lastInt.date) : new Date(firstIssue.date);
+  let startIdx = toMonthIdx(startDate) + 1; // next month after last event
+
+  if (startIdx > nowIdx) return false; // nothing due yet
+
+  let madeChange = false;
+
+  // Apply one transaction per due month
+  for (let mIdx = startIdx; mIdx <= nowIdx; mIdx++) {
+    // Compute the balance at the START of this month by replaying all
+    // transactions strictly before this month
+    let bal = 0;
+    for (const t of ms.transactions) {
+      if (toMonthIdx(new Date(t.date)) < mIdx) {
+        if (t.type === issueType) bal += t.amount;
+        if (t.type === payType)   bal -= t.amount;
+        if (t.type === intType)   bal += t.amount;
+      }
+    }
+    if (bal <= 0) continue; // loan fully paid by this point
+
+    const interest = parseFloat((bal * rate).toFixed(2));
+    if (interest <= 0) continue;
+
+    // Date stamp: 1st day of that month
+    const year  = Math.floor(mIdx / 12);
+    const month = mIdx % 12;
+    const intDate = new Date(year, month, 1).toISOString();
+
+    ms.transactions.push({
+      id: uid(),
+      date: intDate,
+      type: intType,
+      amount: interest,
+      note: 'Auto interest (' + (rate * 100) + '%/mo on ' + fmt(bal) + ')'
+    });
+    madeChange = true;
+  }
+  return madeChange;
+}
+
+function groupStats(gid) {
+  const list = state.memberships.filter(m => m.gid === gid);
+  let shares = 0, loans = 0, advs = 0;
+  for (const ms of list) { const c = calcMs(ms); shares += c.shares; loans += c.loan; advs += c.adv; }
+  return { shares, loans, advs, balance: shares - loans - advs, count: list.length };
+}
+
+function allStats() {
+  let shares = 0, loans = 0, advs = 0, balance = 0;
+  for (const gid of Object.keys(state.groups)) {
+    const s = groupStats(gid);
+    shares += s.shares; loans += s.loans; advs += s.advs; balance += s.balance;
+  }
+  return { shares, loans, advs, balance, count: Object.keys(state.groups).length };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
+let _uid = 0;
+function uid() { return Date.now().toString(36) + (++_uid).toString(36); }
+
+function fmt(n) {
+  return 'KES ' + Number(n || 0).toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function fmtDate(iso) {
+  return new Date(iso).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function el(tag, attrs = {}, ...children) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === 'class') e.className = v;
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2).toLowerCase(), v);
+    else e.setAttribute(k, v);
+  }
+  for (const c of children) {
+    if (c == null) continue;
+    e.append(typeof c === 'string' ? document.createTextNode(c) : c);
+  }
+  return e;
+}
+
+function html(str) {
+  const d = document.createElement('div');
+  d.innerHTML = str;
+  return d.firstElementChild;
+}
+
+function svgChevron() {
+  const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  s.setAttribute('width', '16'); s.setAttribute('height', '16');
+  s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('fill', 'none');
+  s.setAttribute('stroke', 'currentColor'); s.setAttribute('stroke-width', '2.5');
+  s.setAttribute('stroke-linecap', 'round'); s.setAttribute('stroke-linejoin', 'round');
+  s.innerHTML = '<polyline points="9 18 15 12 9 6"/>';
+  return s;
+}
+
+function svgBack() {
+  const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  s.setAttribute('width', '16'); s.setAttribute('height', '16');
+  s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('fill', 'none');
+  s.setAttribute('stroke', 'currentColor'); s.setAttribute('stroke-width', '2.5');
+  s.setAttribute('stroke-linecap', 'round'); s.setAttribute('stroke-linejoin', 'round');
+  s.innerHTML = '<polyline points="15 18 9 12 15 6"/>';
+  return s;
+}
+
+function svgTrash() {
+  const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  s.setAttribute('width', '14'); s.setAttribute('height', '14');
+  s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('fill', 'none');
+  s.setAttribute('stroke', 'currentColor'); s.setAttribute('stroke-width', '2');
+  s.setAttribute('stroke-linecap', 'round'); s.setAttribute('stroke-linejoin', 'round');
+  s.innerHTML = '<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>';
+  return s;
+}
+
+function makeTrashBtn(title, onDelete) {
+  const btn = el('button', { class: 'btn-icon', title });
+  btn.appendChild(svgTrash());
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    onDelete();
+  });
+  return btn;
+}
+
+function statBox(label, value, sub) {
+  return el('div', { class: 'stat-box' },
+    el('div', { class: 'stat-label' }, label),
+    el('div', { class: 'stat-value' }, value),
+    sub ? el('div', { class: 'stat-sub' }, sub) : null
+  );
+}
+
+function fieldEl(label, input) {
+  const wrap = el('div', { class: 'field' });
+  if (label) wrap.appendChild(el('label', {}, label));
+  wrap.appendChild(input);
+  return wrap;
+}
+
+function inputEl(attrs = {}) {
+  return el('input', attrs);
+}
+
+function selectEl(options, value) {
+  const s = el('select');
+  for (const [k, v] of Object.entries(options)) {
+    const o = el('option', { value: k }, v);
+    if (k === value) o.selected = true;
+    s.appendChild(o);
+  }
+  return s;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ROUTING
+// ─────────────────────────────────────────────────────────────────────────────
+let currentPage = { name: 'groups' };
+
+function navigate(name, params = {}) {
+  currentPage = { name, ...params };
+  renderPage();
+  // update nav active state
+  document.querySelectorAll('.nav-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.nav === (name === 'group' ? 'groups' : name));
+  });
+  window.scrollTo(0, 0);
+}
+
+function renderPage() {
+  const content = document.getElementById('content');
+  content.innerHTML = '';
+  const { name } = currentPage;
+  if (name === 'groups') content.appendChild(renderGroupsPage());
+  else if (name === 'group') content.appendChild(renderGroupPage(currentPage.gid));
+  else if (name === 'search') content.appendChild(renderSearchPage());
+  else if (name === 'totals') content.appendChild(renderTotalsPage());
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GROUPS LIST PAGE
+// ─────────────────────────────────────────────────────────────────────────────
+function renderGroupsPage() {
+  const groups = Object.values(state.groups);
+  const wrap = el('div', {});
+
+  // heading
+  const head = el('div', { class: 'page-head' },
+    el('div', {},
+      el('div', { class: 'page-title' }, 'Groups'),
+      el('div', { class: 'page-sub' }, groups.length + ' registered group' + (groups.length !== 1 ? 's' : ''))
+    ),
+    el('button', { class: 'btn btn-primary', onclick: () => openAddGroupModal() }, '+ New Group')
+  );
+  wrap.appendChild(head);
+
+  if (groups.length === 0) {
+    wrap.appendChild(el('div', { class: 'empty' },
+      el('div', { class: 'empty-icon' }, '🏦'),
+      el('div', { class: 'empty-title' }, 'No groups yet'),
+      el('div', { class: 'empty-sub' }, 'Create your first group to get started')
+    ));
+    return wrap;
+  }
+
+  const list = el('div', { style: 'display:flex;flex-direction:column;gap:10px' });
+  for (const g of groups) {
+    const s = groupStats(g.id);
+    const row = el('div', { class: 'row' });
+
+    const left = el('div', { class: 'row-left' },
+      el('div', { class: 'row-name' }, g.name),
+      el('div', { class: 'row-meta' }, g.area + ' · ' + s.count + ' member' + (s.count !== 1 ? 's' : ''))
+    );
+
+    const sharesCol = el('div', { style: 'text-align:right' },
+      el('div', { class: 'row-stat-label' }, 'Shares'),
+      el('div', { class: 'row-stat-value', style: 'color:var(--green)' }, fmt(s.shares))
+    );
+
+    const balCol = el('div', { style: 'text-align:right' },
+      el('div', { class: 'row-stat-label' }, 'Balance'),
+      el('div', { class: 'row-stat-value', style: 'color:' + (s.balance >= 0 ? 'var(--text)' : 'var(--red)') }, fmt(s.balance))
+    );
+
+    const gid = g.id;
+    const trashBtn = makeTrashBtn('Delete group', () => confirmDeleteGroup(gid));
+
+    const chevron = el('span', { class: 'chevron' });
+    chevron.appendChild(svgChevron());
+
+    const right = el('div', { class: 'row-right' }, sharesCol, balCol, trashBtn, chevron);
+
+    left.addEventListener('click', () => navigate('group', { gid }));
+    right.addEventListener('click', (e) => {
+      if (!e.target.closest('.btn-icon')) navigate('group', { gid });
+    });
+
+    row.appendChild(left);
+    row.appendChild(right);
+    list.appendChild(row);
+  }
+  wrap.appendChild(list);
+  return wrap;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SINGLE GROUP PAGE
+// ─────────────────────────────────────────────────────────────────────────────
+function renderGroupPage(gid) {
+  const g = state.groups[gid];
+  if (!g) {
+    const wrap = el('div', { class: 'empty' }, el('div', {}, 'Group not found.'));
+    wrap.appendChild(el('button', { class: 'btn btn-ghost mt-16', onclick: () => navigate('groups') }, '← Back'));
+    return wrap;
+  }
+
+  const s = groupStats(gid);
+  const members = state.memberships
+    .filter(ms => ms.gid === gid)
+    .sort((a, b) => {
+      const na = isNaN(a.memberNo) ? a.memberNo : Number(a.memberNo);
+      const nb = isNaN(b.memberNo) ? b.memberNo : Number(b.memberNo);
+      if (typeof na === "number" && typeof nb === "number") return na - nb;
+      return String(na).localeCompare(String(nb));
+    });
+  const wrap = el('div', {});
+
+  // Back link
+  const back = el('button', { class: 'back-link' });
+  back.appendChild(svgBack());
+  back.appendChild(document.createTextNode(' All Groups'));
+  back.addEventListener('click', () => navigate('groups'));
+  wrap.appendChild(back);
+
+  // Head
+  const head = el('div', { class: 'page-head' },
+    el('div', {},
+      el('div', { class: 'page-title' }, g.name),
+      el('div', { class: 'page-sub' }, g.area + ' · ' + s.count + ' member' + (s.count !== 1 ? 's' : ''))
+    ),
+    el('div', { class: 'flex-row' },
+      el('button', { class: 'btn btn-danger btn-sm', onclick: () => confirmDeleteGroup(gid) }, 'Delete Group'),
+      el('button', { class: 'btn btn-primary', onclick: () => openAddMemberModal(gid) }, '+ Add Member')
+    )
+  );
+  wrap.appendChild(head);
+
+  // Stats
+  const sg = el('div', { class: 'stat-grid' },
+    statBox('Total Shares', fmt(s.shares)),
+    statBox('Loans Out', fmt(s.loans)),
+    statBox('Advances Out', fmt(s.advs)),
+    statBox('Group Balance', fmt(s.balance))
+  );
+  wrap.appendChild(sg);
+
+  // Members section title
+  wrap.appendChild(el('div', { style: 'font-weight:700;font-size:15px;margin-bottom:12px' }, 'Members'));
+
+  if (members.length === 0) {
+    wrap.appendChild(el('div', { class: 'empty' },
+      el('div', { class: 'empty-icon' }, '👤'),
+      el('div', { class: 'empty-title' }, 'No members yet'),
+      el('div', { class: 'empty-sub' }, 'Add the first member to this group')
+    ));
+    return wrap;
+  }
+
+  const list = el('div', { style: 'display:flex;flex-direction:column;gap:8px' });
+
+  for (const ms of members) {
+    const mem = state.members[ms.mid];
+    if (!mem) continue;
+    const c = calcMs(ms);
+    const msId = ms.id;
+
+    const row = el('div', { class: 'row' });
+
+    const left = el('div', { class: 'row-left', style: 'cursor:pointer' },
+      el('div', { class: 'row-name' }, mem.name),
+      el('div', { class: 'row-meta' }, '#' + ms.memberNo + ' · ' + mem.phone + ' · ID: ' + mem.idNo)
+    );
+    left.addEventListener('click', () => openMemberModal(msId));
+
+    const sharesCol = el('div', { style: 'text-align:right;cursor:pointer' },
+      el('div', { class: 'row-stat-label' }, 'Shares'),
+      el('div', { class: 'row-stat-value', style: 'color:var(--green)' }, fmt(c.shares))
+    );
+    sharesCol.addEventListener('click', () => openMemberModal(msId));
+
+    const trashBtn = makeTrashBtn('Remove member from group', () => confirmDeleteMembership(msId));
+    const chevron = el('span', { class: 'chevron', style: 'cursor:pointer' });
+    chevron.appendChild(svgChevron());
+    chevron.addEventListener('click', () => openMemberModal(msId));
+
+    const right = el('div', { class: 'row-right' }, sharesCol);
+
+    if (c.loan > 0) {
+      const lCol = el('div', { style: 'text-align:right;cursor:pointer' },
+        el('div', { class: 'row-stat-label' }, 'Loan Balance'),
+        el('div', { class: 'row-stat-value', style: 'color:var(--orange)' }, fmt(c.loan))
+      );
+      lCol.addEventListener('click', () => openMemberModal(msId));
+      right.appendChild(lCol);
+    }
+    if (c.adv > 0) {
+      const aCol = el('div', { style: 'text-align:right;cursor:pointer' },
+        el('div', { class: 'row-stat-label' }, 'Advance Balance'),
+        el('div', { class: 'row-stat-value', style: 'color:var(--purple)' }, fmt(c.adv))
+      );
+      aCol.addEventListener('click', () => openMemberModal(msId));
+      right.appendChild(aCol);
+    }
+
+    right.appendChild(trashBtn);
+    right.appendChild(chevron);
+
+    row.appendChild(left);
+    row.appendChild(right);
+    list.appendChild(row);
+  }
+  wrap.appendChild(list);
+  return wrap;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SEARCH PAGE
+// ─────────────────────────────────────────────────────────────────────────────
+function renderSearchPage() {
+  const wrap = el('div', {});
+  wrap.appendChild(el('div', { class: 'page-title', style: 'margin-bottom:16px' }, 'Search Member'));
+
+  const searchWrap = el('div', { class: 'field' });
+  searchWrap.appendChild(el('label', {}, 'Search by name, ID number, phone, or member number'));
+  const inp = inputEl({ placeholder: 'e.g. Jane, 12345678, 0712…', style: 'font-size:15px' });
+  searchWrap.appendChild(inp);
+  wrap.appendChild(searchWrap);
+
+  const results = el('div', { style: 'margin-top:20px;display:flex;flex-direction:column;gap:12px' });
+  wrap.appendChild(results);
+
+  inp.addEventListener('input', () => {
+    const q = inp.value.trim().toLowerCase();
+    results.innerHTML = '';
+    if (!q) return;
+
+    const matched = Object.values(state.members).filter(m =>
+      m.name.toLowerCase().includes(q) ||
+      m.idNo.toLowerCase().includes(q) ||
+      m.phone.toLowerCase().includes(q) ||
+      state.memberships.some(ms => ms.mid === m.id && ms.memberNo.toString().toLowerCase().includes(q))
+    );
+
+    if (matched.length === 0) {
+      results.appendChild(el('div', { class: 'empty' }, el('div', { class: 'empty-sub' }, 'No members found')));
+      return;
+    }
+
+    for (const mem of matched) {
+      const card = el('div', { class: 'card' });
+      card.appendChild(el('div', { style: 'font-weight:700;font-size:16px' }, mem.name));
+      card.appendChild(el('div', { style: 'font-size:13px;color:var(--muted);margin-top:2px' }, 'ID: ' + mem.idNo + ' · Phone: ' + mem.phone));
+
+      const mslist = state.memberships.filter(ms => ms.mid === mem.id);
+      const msWrap = el('div', { style: 'margin-top:14px;display:flex;flex-direction:column;gap:8px' });
+      for (const ms of mslist) {
+        const g = state.groups[ms.gid];
+        const c = calcMs(ms);
+        const msId = ms.id;
+        const msRow = el('div', { style: 'padding:10px 14px;background:#f9fafb;border-radius:8px;border:1.5px solid var(--border);cursor:pointer' });
+        msRow.addEventListener('click', () => openMemberModal(msId));
+        msRow.addEventListener('mouseenter', () => msRow.style.borderColor = '#2d6a4f40');
+        msRow.addEventListener('mouseleave', () => msRow.style.borderColor = 'var(--border)');
+
+        const top = el('div', { style: 'display:flex;justify-content:space-between;align-items:flex-start' },
+          el('div', {},
+            el('div', { style: 'font-weight:600' }, g ? g.name : '(deleted group)'),
+            el('div', { style: 'font-size:12px;color:var(--muted)' }, (g ? g.area + ' · ' : '') + 'Member #' + ms.memberNo)
+          ),
+          el('div', { style: 'text-align:right' },
+            el('div', { style: 'font-size:12px;color:var(--muted)' }, 'Shares'),
+            el('div', { style: 'font-weight:700;color:var(--green)' }, fmt(c.shares))
+          )
+        );
+        const bottom = el('div', { style: 'display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px' },
+          el('div', { style: 'font-size:12px' }, el('span', { style: 'color:var(--muted)' }, 'Loan: '), el('b', {}, fmt(c.loan))),
+          el('div', { style: 'font-size:12px' }, el('span', { style: 'color:var(--muted)' }, 'Advance: '), el('b', {}, fmt(c.adv))),
+          el('div', { style: 'font-size:12px' }, el('span', { style: 'color:var(--muted)' }, 'Interest: '), el('b', {}, fmt(c.loanInt + c.advInt)))
+        );
+        msRow.appendChild(top);
+        msRow.appendChild(bottom);
+        msWrap.appendChild(msRow);
+      }
+      card.appendChild(msWrap);
+      results.appendChild(card);
+    }
+  });
+
+  inp.focus();
+  return wrap;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TOTALS PAGE
+// ─────────────────────────────────────────────────────────────────────────────
+function renderTotalsPage() {
+  const all = allStats();
+  const groups = Object.values(state.groups);
+  const wrap = el('div', {});
+
+  wrap.appendChild(el('div', { class: 'page-title', style: 'margin-bottom:4px' }, 'All Groups — Totals'));
+  wrap.appendChild(el('div', { class: 'page-sub', style: 'margin-bottom:20px' }, all.count + ' group' + (all.count !== 1 ? 's' : '') + ' combined'));
+
+  wrap.appendChild(el('div', { class: 'stat-grid' },
+    statBox('Total Shares', fmt(all.shares)),
+    statBox('Total Loans', fmt(all.loans)),
+    statBox('Total Advances', fmt(all.advs)),
+    statBox('Net Balance', fmt(all.balance))
+  ));
+
+  wrap.appendChild(el('div', { style: 'font-weight:700;font-size:15px;margin-bottom:12px' }, 'Breakdown by Group'));
+
+  if (groups.length === 0) {
+    wrap.appendChild(el('div', { class: 'empty', style: 'padding:24px' }, el('div', { class: 'empty-sub' }, 'No groups yet')));
+    return wrap;
+  }
+
+  const list = el('div', { style: 'display:flex;flex-direction:column;gap:10px' });
+  for (const g of groups) {
+    const s = groupStats(g.id);
+    const gid = g.id;
+
+    const row = el('div', { class: 'row' });
+    const left = el('div', { class: 'row-left' },
+      el('div', { class: 'row-name' }, g.name),
+      el('div', { class: 'row-meta' }, g.area + ' · ' + s.count + ' members')
+    );
+    const right = el('div', { class: 'row-right' });
+    const sharesEl = el('div', { style: 'font-size:13px' }, el('span', { style: 'color:var(--muted)' }, 'Shares '), el('b', {}, fmt(s.shares)));
+    const loansEl  = el('div', { style: 'font-size:13px' }, el('span', { style: 'color:var(--muted)' }, 'Loans '),  el('b', {}, fmt(s.loans)));
+    const balEl    = el('div', { style: 'font-size:13px' }, el('span', { style: 'color:var(--muted)' }, 'Balance '), el('b', { style: 'color:' + (s.balance >= 0 ? 'var(--green)' : 'var(--red)') }, fmt(s.balance)));
+    const chev = el('span', { class: 'chevron' }); chev.appendChild(svgChevron());
+    right.append(sharesEl, loansEl, balEl, chev);
+
+    row.appendChild(left); row.appendChild(right);
+    row.addEventListener('click', () => navigate('group', { gid }));
+    list.appendChild(row);
+  }
+  wrap.appendChild(list);
+  return wrap;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MODAL ENGINE
+// ─────────────────────────────────────────────────────────────────────────────
+function openModal(title, bodyNode) {
+  document.getElementById('modal-title').textContent = title;
+  const body = document.getElementById('modal-body');
+  body.innerHTML = '';
+  body.appendChild(bodyNode);
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeModal(e) {
+  if (e && e.target !== document.getElementById('modal-overlay') && e.type !== 'click') return;
+  document.getElementById('modal-overlay').classList.remove('open');
+  renderPage();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ADD GROUP MODAL
+// ─────────────────────────────────────────────────────────────────────────────
+function openAddGroupModal() {
+  const body = el('div', { style: 'display:flex;flex-direction:column;gap:14px' });
+
+  const nameF = fieldEl('Group Name', inputEl({ placeholder: 'e.g. Umoja Savings Group' }));
+  const areaF = fieldEl('Area / Location', inputEl({ placeholder: 'e.g. Naivasha, Nakuru' }));
+  const errEl = el('div', { class: 'err', style: 'display:none' });
+
+  const nameInp = nameF.querySelector('input');
+  const areaInp = areaF.querySelector('input');
+
+  const saveBtn = el('button', { class: 'btn btn-primary' }, 'Save Group');
+  saveBtn.addEventListener('click', () => {
+    const name = nameInp.value.trim();
+    const area = areaInp.value.trim();
+    if (!name || !area) { errEl.textContent = 'Both fields are required.'; errEl.style.display = ''; return; }
+    const id = uid();
+    state.groups[id] = { id, name, area };
+    saveState();
+    closeModal();
+    navigate('group', { gid: id });
+  });
+
+  const cancelBtn = el('button', { class: 'btn btn-ghost' }, 'Cancel');
+  cancelBtn.addEventListener('click', closeModal);
+
+  const actions = el('div', { style: 'display:flex;gap:10px;justify-content:flex-end;margin-top:8px' }, cancelBtn, saveBtn);
+  body.append(nameF, areaF, errEl, actions);
+  openModal('Register New Group', body);
+  nameInp.focus();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ADD MEMBER MODAL
+// ─────────────────────────────────────────────────────────────────────────────
+function openAddMemberModal(gid) {
+  const body = el('div', { style: 'display:flex;flex-direction:column;gap:14px' });
+
+  const nameF = fieldEl('Full Name', inputEl({ placeholder: 'Jane Wanjiku' }));
+  const idF   = fieldEl('ID Number', inputEl({ placeholder: '12345678' }));
+  const phF   = fieldEl('Phone Number', inputEl({ placeholder: '0712 345 678' }));
+  const noF   = fieldEl('Member Number', inputEl({ placeholder: 'e.g. 001' }));
+  const errEl = el('div', { class: 'err', style: 'display:none' });
+
+  const [nameInp, idInp, phInp, noInp] = [nameF, idF, phF, noF].map(f => f.querySelector('input'));
+
+  const saveBtn = el('button', { class: 'btn btn-primary' }, 'Add Member');
+  saveBtn.addEventListener('click', () => {
+    const name = nameInp.value.trim();
+    const idNo = idInp.value.trim();
+    const phone = phInp.value.trim();
+    const memberNo = noInp.value.trim();
+    if (!name || !idNo || !phone || !memberNo) { errEl.textContent = 'All fields are required.'; errEl.style.display = ''; return; }
+    if (state.memberships.some(ms => ms.gid === gid && ms.memberNo === memberNo)) { errEl.textContent = 'Member number already used in this group.'; errEl.style.display = ''; return; }
+
+    // Find or create member
+    let mid = Object.values(state.members).find(m => m.idNo === idNo)?.id;
+    if (!mid) { mid = uid(); state.members[mid] = { id: mid, name, idNo, phone }; }
+
+    const msId = uid();
+    state.memberships.push({ id: msId, gid, mid, memberNo, transactions: [] });
+    saveState();
+    closeModal();
+    navigate('group', { gid });
+  });
+
+  const cancelBtn = el('button', { class: 'btn btn-ghost' }, 'Cancel');
+  cancelBtn.addEventListener('click', closeModal);
+
+  const actions = el('div', { style: 'display:flex;gap:10px;justify-content:flex-end;margin-top:8px' }, cancelBtn, saveBtn);
+  body.append(nameF, idF, phF, noF, errEl, actions);
+  openModal('Register Member', body);
+  nameInp.focus();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MEMBER DETAIL MODAL
+// ─────────────────────────────────────────────────────────────────────────────
+const TXN_LABELS = {
+  SD: 'Shares Deposit',    SW: 'Shares Withdrawal',
+  LI: 'Loan Issued',       LP: 'Loan Payment',
+  AI: 'Advance Issued',    AP: 'Advance Payment',
+  LX: 'Loan Interest',     AX: 'Advance Interest'
+};
+const TXN_NEG = new Set(['SW', 'LI', 'AI', 'LX', 'AX']);
+
+function openMemberModal(msId) {
+  const ms = state.memberships.find(m => m.id === msId);
+  if (!ms) return;
+  const mem = state.members[ms.mid];
+  if (!mem) return;
+
+  // Open modal first so #modal-body exists in DOM
+  document.getElementById('modal-title').textContent = 'Member Details';
+  document.getElementById('modal-body').innerHTML = '';
+  document.getElementById('modal-overlay').classList.add('open');
+
+  // Render directly into #modal-body — Record will re-render the same node
+  renderMemberModalBody(document.getElementById('modal-body'), msId);
+}
+
+function renderMemberModalBody(container, msId) {
+  container.innerHTML = '';
+  const ms = state.memberships.find(m => m.id === msId);
+  if (!ms) { container.textContent = 'Member not found.'; return; }
+  const mem = state.members[ms.mid];
+  const g   = state.groups[ms.gid];
+  if (!mem) { container.textContent = 'Member not found.'; return; }
+  const c = calcMs(ms);
+
+  // Member info header
+  const infoBox = el('div', { style: 'background:var(--green-pale);border:1px solid var(--green-border);border-radius:8px;padding:12px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px' });
+  const infoLeft = el('div', {},
+    el('div', { style: 'font-weight:700;font-size:16px' }, mem.name),
+    el('div', { style: 'font-size:12px;color:var(--muted);margin-top:2px' }, (g ? g.name : '?') + ' · #' + ms.memberNo + ' · ID: ' + mem.idNo + ' · ' + mem.phone)
+  );
+  const removeBtn = el('button', { class: 'btn btn-danger btn-sm', style: 'white-space:nowrap;flex-shrink:0' }, 'Remove');
+  removeBtn.addEventListener('click', () => {
+    if (!confirm('Remove ' + mem.name + ' from this group? Their data in other groups will be kept.')) return;
+    state.memberships = state.memberships.filter(m => m.id !== msId);
+    const stillActive = state.memberships.some(m => m.mid === ms.mid);
+    if (!stillActive) delete state.members[ms.mid];
+    saveState();
+    closeModal();
+    renderPage();
+  });
+  infoBox.append(infoLeft, removeBtn);
+  container.appendChild(infoBox);
+
+  // Stats — recalculate fresh each render so Record always shows updated values
+  const sg = el('div', { class: 'stat-grid' },
+    statBox('Total Shares',    fmt(c.shares),  'Max loan: ' + fmt(c.maxLoan)),
+    statBox('Loan Balance',    fmt(c.loan),    c.loan > 0 ? 'Incl. accrued interest' : 'No active loan'),
+    statBox('Advance Balance', fmt(c.adv),     c.adv  > 0 ? 'Incl. accrued interest' : 'No active advance'),
+    statBox('Monthly Interest', fmt(c.loanInt + c.advInt), 'Loan: ' + fmt(c.loanInt) + ' · Adv: ' + fmt(c.advInt))
+  );
+  container.appendChild(sg);
+
+  // Record transaction
+  container.appendChild(el('div', { style: 'font-weight:700;font-size:14px;margin-bottom:12px' }, 'Record Transaction'));
+
+  const txnSel = selectEl(TXN_LABELS, 'SD');
+  const amtInp = inputEl({ type: 'number', placeholder: '0.00', style: 'font-size:18px;font-weight:600;padding:10px 12px' });
+  const noteInp = inputEl({ placeholder: 'e.g. June contribution' });
+  const txnErr = el('div', { class: 'err', style: 'display:none' });
+
+  const recordBtn = el('button', { class: 'btn btn-primary', style: 'width:100%' }, 'Record');
+  recordBtn.addEventListener('click', () => {
+    const freshMs = state.memberships.find(m => m.id === msId);
+    const fc = calcMs(freshMs);
+    const type = txnSel.value;
+    const amount = parseFloat(amtInp.value);
+    if (!amount || amount <= 0) { txnErr.textContent = 'Enter a valid amount.'; txnErr.style.display = ''; return; }
+    if (type === 'LI' && amount > fc.maxLoan) { txnErr.textContent = 'Max loan is ' + fmt(fc.maxLoan) + ' (2.5× shares).'; txnErr.style.display = ''; return; }
+    if (type === 'SW' && amount > fc.shares)  { txnErr.textContent = 'Withdrawal exceeds available shares.'; txnErr.style.display = ''; return; }
+
+    freshMs.transactions.push({ id: uid(), date: new Date().toISOString(), type, amount, note: noteInp.value.trim() });
+    saveState();
+    renderMemberModalBody(document.getElementById('modal-body'), msId);
+    document.getElementById('modal-box').scrollTop = 0;
+  });
+
+  const txnForm = el('div', { style: 'display:flex;flex-direction:column;gap:12px;margin-bottom:24px' },
+    fieldEl('Type', txnSel),
+    fieldEl('Amount (KES)', amtInp),
+    fieldEl('Note (optional)', noteInp),
+    txnErr,
+    recordBtn
+  );
+  container.appendChild(txnForm);
+
+  // Transaction history
+  const txns = ms.transactions;
+  if (txns.length > 0) {
+    container.appendChild(el('div', { style: 'font-weight:700;font-size:14px;margin-bottom:10px' }, 'Transaction History'));
+    const list = el('div', { class: 'scroll-list' });
+
+    for (const t of [...txns].reverse()) {
+      const neg = TXN_NEG.has(t.type);
+      const tid = t.id;
+
+      const row = el('div', { class: 'txn-row' });
+      const info = el('div', { style: 'flex:1' },
+        el('div', { class: 'txn-type' }, TXN_LABELS[t.type]),
+        el('div', { class: 'txn-date' }, fmtDate(t.date) + (t.note ? ' · ' + t.note : ''))
+      );
+      const amtEl = el('span', { class: 'txn-amount ' + (neg ? 'txn-neg' : 'txn-pos') },
+        (neg ? '−' : '+') + fmt(t.amount).replace('KES ', '')
+      );
+      const del = makeTrashBtn('Delete transaction', () => {
+        if (!confirm('Delete this transaction? This will affect the member\'s balances.')) return;
+        const target = state.memberships.find(m => m.id === msId);
+        target.transactions = target.transactions.filter(x => x.id !== tid);
+        saveState();
+        renderMemberModalBody(document.getElementById('modal-body'), msId);
+      });
+
+      const rightSide = el('div', { style: 'display:flex;align-items:center;gap:8px' }, amtEl, del);
+      row.append(info, rightSide);
+      list.appendChild(row);
+    }
+    container.appendChild(list);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DELETE ACTIONS
+// ─────────────────────────────────────────────────────────────────────────────
+function confirmDeleteGroup(gid) {
+  const g = state.groups[gid];
+  if (!g) return;
+  if (!confirm('Delete group "' + g.name + '" and all its member data?\n\nThis cannot be undone.')) return;
+
+  const mids = state.memberships.filter(ms => ms.gid === gid).map(ms => ms.mid);
+  state.memberships = state.memberships.filter(ms => ms.gid !== gid);
+  const orphans = mids.filter(mid => !state.memberships.some(ms => ms.mid === mid));
+  for (const mid of orphans) delete state.members[mid];
+  delete state.groups[gid];
+  saveState();
+  navigate('groups');
+}
+
+function confirmDeleteMembership(msId) {
+  const ms = state.memberships.find(m => m.id === msId);
+  if (!ms) return;
+  const mem = state.members[ms.mid];
+  const name = mem ? mem.name : 'this member';
+  if (!confirm('Remove ' + name + ' from this group?\n\nTheir data in other groups will be kept.')) return;
+
+  const gid = ms.gid;
+  const mid = ms.mid;
+  state.memberships = state.memberships.filter(m => m.id !== msId);
+  const stillActive = state.memberships.some(m => m.mid === mid);
+  if (!stillActive) delete state.members[mid];
+  saveState();
+  navigate('group', { gid });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PWA: SERVICE WORKER + INSTALL
+// ─────────────────────────────────────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+let deferredInstall = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstall = e;
+  const banner = document.getElementById('install-banner');
+  banner.classList.add('show');
+});
+
+document.getElementById('install-yes').addEventListener('click', async () => {
+  if (!deferredInstall) return;
+  deferredInstall.prompt();
+  await deferredInstall.userChoice;
+  deferredInstall = null;
+  document.getElementById('install-banner').classList.remove('show');
+});
+
+document.getElementById('install-no').addEventListener('click', () => {
+  document.getElementById('install-banner').classList.remove('show');
+});
+
+window.addEventListener('appinstalled', () => {
+  document.getElementById('install-banner').classList.remove('show');
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BOOT
+// ─────────────────────────────────────────────────────────────────────────────
+applyMonthlyInterest();
+navigate('groups');
+</script>
+</body>
+</html>
