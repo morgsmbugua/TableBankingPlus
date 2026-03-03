@@ -4,8 +4,8 @@
   <!-- BUILD: 20260303221137 -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TableBank</title>
-  <meta name="description" content="Group Table Banking Finance Manager" />
+  <title>Table Banking Plus</title>
+  <meta name="description" content="Groups' Table Banking Finance Manager" />
   <meta name="theme-color" content="#2d6a4f" />
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icon-192.png" />
@@ -63,10 +63,10 @@
       background: transparent;
       color: #b7e4c7;
       border: none;
-      border-radius: 6px;
+      border-radius: 5px;
       padding: 6px 13px;
       font-size: 13px;
-      font-weight: 600;
+      font-weight: 500;
       cursor: pointer;
       font-family: inherit;
       transition: all 0.15s;
@@ -271,13 +271,13 @@
 <div id="header">
   <div id="header-inner">
     <div id="logo" onclick="navigate('groups')">
-      <div id="logo-title">TableBank</div>
-      <div id="logo-sub">Group Finance Manager</div>
+      <div id="logo-title">Table Banking +</div>
+      <div id="logo-sub">Groups' Finance Manager</div>
     </div>
     <div id="nav">
       <button class="nav-btn" data-nav="groups"  onclick="navigate('groups')">Groups</button>
       <button class="nav-btn" data-nav="search"  onclick="navigate('search')">Search</button>
-      <button class="nav-btn" data-nav="totals"  onclick="navigate('totals')">All Totals</button>
+      <button class="nav-btn" data-nav="totals"  onclick="navigate('totals')">Totals</button>
     </div>
   </div>
 </div>
@@ -297,7 +297,7 @@
 
 <!-- Install banner -->
 <div id="install-banner">
-  <span>Install TableBank for offline use</span>
+  <span>Install Table Banking Plus</span>
   <button id="install-yes">Install</button>
   <button id="install-no">×</button>
 </div>
@@ -695,7 +695,7 @@ function renderGroupPage(gid) {
   const wrap = el('div', {});
 
   // Back link
-  const back = el('button', { class: 'back-link' });
+  const back = el('button', { class: 'back-link', style: 'font-size: 20px' });
   back.appendChild(svgBack());
   back.appendChild(document.createTextNode(' All Groups'));
   back.addEventListener('click', () => navigate('groups'));
