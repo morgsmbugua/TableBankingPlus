@@ -327,12 +327,92 @@ function calcMs(ms) {
     if (t.type === 'SW') shares -= t.amount;
     if (t.type === 'LI') loan   += t.amount;
     if (t.type === 'LP') loan   -= t.amount;
+    if (t.type === 'LX') loan   += t.amount; // loan interest added to balance
     if (t.type === 'AI') adv    += t.amount;
     if (t.type === 'AP') adv    -= t.amount;
+    if (t.type === 'AX') adv    += t.amount; // advance interest added to balance
   }
   const loanInt = loan > 0 ? loan * LOAN_INT : 0;
   const advInt  = adv  > 0 ? adv  * ADV_INT  : 0;
   return { shares, loan, adv, loanInt, advInt, maxLoan: shares * LOAN_MULT };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AUTO INTEREST ACCRUAL
+// Runs on load. For each membership with an active loan or advance, checks how
+// many full calendar months have elapsed since the last interest transaction
+// (or since the loan was first issued if no interest has been applied yet),
+// then inserts one LX/AX transaction per missed month at the balance that
+// existed at the START of that month.
+// ─────────────────────────────────────────────────────────────────────────────
+function applyMonthlyInterest() {
+  const now = new Date();
+  // Work in UTC-like month arithmetic: year*12 + month index
+  const toMonthIdx = d => d.getFullYear() * 12 + d.getMonth();
+  const nowIdx = toMonthIdx(now);
+  let changed = false;
+
+  for (const ms of state.memberships) {
+    // Process loan interest
+    changed = accrueInterest(ms, 'LI', 'LP', 'LX', LOAN_INT, nowIdx, toMonthIdx) || changed;
+    // Process advance interest
+    changed = accrueInterest(ms, 'AI', 'AP', 'AX', ADV_INT,  nowIdx, toMonthIdx) || changed;
+  }
+
+  if (changed) {
+    saveState();
+    console.log('[TableBank] Monthly interest applied and saved.');
+  }
+}
+
+function accrueInterest(ms, issueType, payType, intType, rate, nowIdx, toMonthIdx) {
+  // Find first issue transaction
+  const firstIssue = ms.transactions.find(t => t.type === issueType);
+  if (!firstIssue) return false;
+
+  // Find the last interest transaction already applied
+  const lastInt = [...ms.transactions].reverse().find(t => t.type === intType);
+
+  // The month AFTER the last interest applied, or the month AFTER issuance
+  const startDate = lastInt ? new Date(lastInt.date) : new Date(firstIssue.date);
+  let startIdx = toMonthIdx(startDate) + 1; // next month after last event
+
+  if (startIdx > nowIdx) return false; // nothing due yet
+
+  let madeChange = false;
+
+  // Apply one transaction per due month
+  for (let mIdx = startIdx; mIdx <= nowIdx; mIdx++) {
+    // Compute the balance at the START of this month by replaying all
+    // transactions strictly before this month
+    let bal = 0;
+    for (const t of ms.transactions) {
+      if (toMonthIdx(new Date(t.date)) < mIdx) {
+        if (t.type === issueType) bal += t.amount;
+        if (t.type === payType)   bal -= t.amount;
+        if (t.type === intType)   bal += t.amount;
+      }
+    }
+    if (bal <= 0) continue; // loan fully paid by this point
+
+    const interest = parseFloat((bal * rate).toFixed(2));
+    if (interest <= 0) continue;
+
+    // Date stamp: 1st day of that month
+    const year  = Math.floor(mIdx / 12);
+    const month = mIdx % 12;
+    const intDate = new Date(year, month, 1).toISOString();
+
+    ms.transactions.push({
+      id: uid(),
+      date: intDate,
+      type: intType,
+      amount: interest,
+      note: 'Auto interest (' + (rate * 100) + '%/mo on ' + fmt(bal) + ')'
+    });
+    madeChange = true;
+  }
+  return madeChange;
 }
 
 function groupStats(gid) {
@@ -904,9 +984,10 @@ function openAddMemberModal(gid) {
 const TXN_LABELS = {
   SD: 'Shares Deposit',    SW: 'Shares Withdrawal',
   LI: 'Loan Issued',       LP: 'Loan Payment',
-  AI: 'Advance Issued',    AP: 'Advance Payment'
+  AI: 'Advance Issued',    AP: 'Advance Payment',
+  LX: 'Loan Interest',     AX: 'Advance Interest'
 };
-const TXN_NEG = new Set(['SW', 'LI', 'AI']);
+const TXN_NEG = new Set(['SW', 'LI', 'AI', 'LX', 'AX']);
 
 function openMemberModal(msId) {
   const ms = state.memberships.find(m => m.id === msId);
@@ -1089,6 +1170,7 @@ window.addEventListener('appinstalled', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 // BOOT
 // ─────────────────────────────────────────────────────────────────────────────
+applyMonthlyInterest();
 navigate('groups');
 </script>
 </body>
