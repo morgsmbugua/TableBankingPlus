@@ -638,7 +638,6 @@ function renderGroupPage(gid) {
 
     const right = el('div', { class: 'row-right' }, sharesCol);
 
-    // Extra columns for loan/advance
     if (c.loan > 0) {
       const lCol = el('div', { style: 'text-align:right;cursor:pointer' },
         el('div', { class: 'row-stat-label' }, 'Loan'),
@@ -646,6 +645,12 @@ function renderGroupPage(gid) {
       );
       lCol.addEventListener('click', () => openMemberModal(msId));
       right.appendChild(lCol);
+      const liCol = el('div', { style: 'text-align:right;cursor:pointer' },
+        el('div', { class: 'row-stat-label' }, 'Loan Int/mo'),
+        el('div', { class: 'row-stat-value', style: 'color:var(--orange);font-size:13px' }, fmt(c.loanInt))
+      );
+      liCol.addEventListener('click', () => openMemberModal(msId));
+      right.appendChild(liCol);
     }
     if (c.adv > 0) {
       const aCol = el('div', { style: 'text-align:right;cursor:pointer' },
@@ -654,6 +659,12 @@ function renderGroupPage(gid) {
       );
       aCol.addEventListener('click', () => openMemberModal(msId));
       right.appendChild(aCol);
+      const aiCol = el('div', { style: 'text-align:right;cursor:pointer' },
+        el('div', { class: 'row-stat-label' }, 'Adv Int/mo'),
+        el('div', { class: 'row-stat-value', style: 'color:var(--purple);font-size:13px' }, fmt(c.advInt))
+      );
+      aiCol.addEventListener('click', () => openMemberModal(msId));
+      right.appendChild(aiCol);
     }
 
     right.appendChild(trashBtn);
@@ -937,12 +948,12 @@ function renderMemberModalBody(container, msId) {
   infoBox.append(infoLeft, removeBtn);
   container.appendChild(infoBox);
 
-  // Stats
+  // Stats (update after Record)
   const sg = el('div', { class: 'stat-grid' },
-    statBox('Total Shares', fmt(c.shares), 'Max loan: ' + fmt(c.maxLoan)),
-    statBox('Loan Balance', fmt(c.loan), c.loan > 0 ? 'Interest: ' + fmt(c.loanInt) + '/mo' : 'No active loan'),
-    statBox('Advance Balance', fmt(c.adv), c.adv > 0 ? 'Interest: ' + fmt(c.advInt) + '/mo' : 'No active advance'),
-    statBox('Total Interest', fmt(c.loanInt + c.advInt), 'Per month')
+    statBox('Total Shares',    fmt(c.shares),  'Max loan: ' + fmt(c.maxLoan)),
+    statBox('Loan Balance',    fmt(c.loan),    c.loan > 0 ? 'Interest: ' + fmt(c.loanInt) + '/mo' : 'No active loan'),
+    statBox('Advance Balance', fmt(c.adv),     c.adv > 0 ? 'Interest: ' + fmt(c.advInt)  + '/mo' : 'No active advance'),
+    statBox('Total Interest',  fmt(c.loanInt + c.advInt), 'Per month')
   );
   container.appendChild(sg);
 
@@ -954,38 +965,13 @@ function renderMemberModalBody(container, msId) {
   const noteInp = inputEl({ placeholder: 'e.g. June contribution' });
   const txnErr = el('div', { class: 'err', style: 'display:none' });
 
-  // Live preview pill
-  const preview = el('div', { style: 'display:none;align-items:center;justify-content:space-between;background:var(--green-pale);border:1px solid var(--green-border);border-radius:8px;padding:10px 14px' });
-  const previewLabel = el('span', { style: 'font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.05em' }, '');
-  const previewAmount = el('span', { style: 'font-size:20px;font-weight:700;color:var(--green)' }, '');
-  preview.append(previewLabel, previewAmount);
-
-  function updatePreview() {
-    const val = parseFloat(amtInp.value);
-    const type = txnSel.value;
-    if (!amtInp.value || isNaN(val) || val <= 0) {
-      preview.style.display = 'none';
-      txnErr.style.display = 'none';
-      return;
-    }
-    const neg = TXN_NEG.has(type);
-    previewLabel.textContent = TXN_LABELS[type];
-    previewAmount.textContent = (neg ? '−' : '+') + fmt(val);
-    previewAmount.style.color = neg ? 'var(--red)' : 'var(--green)';
-    preview.style.display = 'flex';
-    txnErr.style.display = 'none';
-  }
-
-  amtInp.addEventListener('input', updatePreview);
-  txnSel.addEventListener('change', updatePreview);
-
   const recordBtn = el('button', { class: 'btn btn-primary', style: 'width:100%' }, 'Record');
   recordBtn.addEventListener('click', () => {
     const type = txnSel.value;
     const amount = parseFloat(amtInp.value);
-    if (!amount || amount <= 0) { txnErr.textContent = 'Enter a valid amount.'; txnErr.style.display = ''; preview.style.display = 'none'; return; }
-    if (type === 'LI' && amount > c.maxLoan) { txnErr.textContent = 'Max loan is ' + fmt(c.maxLoan) + ' (2.5× shares).'; txnErr.style.display = ''; preview.style.display = 'none'; return; }
-    if (type === 'SW' && amount > c.shares)  { txnErr.textContent = 'Withdrawal exceeds available shares.'; txnErr.style.display = ''; preview.style.display = 'none'; return; }
+    if (!amount || amount <= 0) { txnErr.textContent = 'Enter a valid amount.'; txnErr.style.display = ''; return; }
+    if (type === 'LI' && amount > c.maxLoan) { txnErr.textContent = 'Max loan is ' + fmt(c.maxLoan) + ' (2.5× shares).'; txnErr.style.display = ''; return; }
+    if (type === 'SW' && amount > c.shares)  { txnErr.textContent = 'Withdrawal exceeds available shares.'; txnErr.style.display = ''; return; }
 
     const target = state.memberships.find(m => m.id === msId);
     target.transactions.push({ id: uid(), date: new Date().toISOString(), type, amount, note: noteInp.value.trim() });
@@ -996,7 +982,6 @@ function renderMemberModalBody(container, msId) {
   const txnForm = el('div', { style: 'display:flex;flex-direction:column;gap:12px;margin-bottom:24px' },
     fieldEl('Type', txnSel),
     fieldEl('Amount (KES)', amtInp),
-    preview,
     fieldEl('Note (optional)', noteInp),
     txnErr,
     recordBtn
