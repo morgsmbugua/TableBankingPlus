@@ -4,8 +4,8 @@
   <!-- BUILD: 20260303221137 -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TableBank</title>
-  <meta name="description" content="Group Table Banking Finance Manager" />
+  <title>Table Bank</title>
+  <meta name="description" content="Groups' Table Banking Finance Manager" />
   <meta name="theme-color" content="#2d6a4f" />
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icon-192.png" />
@@ -63,10 +63,10 @@
       background: transparent;
       color: #b7e4c7;
       border: none;
-      border-radius: 6px;
+      border-radius: 5px;
       padding: 6px 13px;
       font-size: 13px;
-      font-weight: 600;
+      font-weight: 500;
       cursor: pointer;
       font-family: inherit;
       transition: all 0.15s;
@@ -263,73 +263,6 @@
     .scroll-list { max-height: 260px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
     .scroll-list::-webkit-scrollbar { width: 4px; }
     .scroll-list::-webkit-scrollbar-thumb { background: #ddd; border-radius: 4px; }
-
-/* ═══════════════════════════════════════════════════════════════════
-   RESPONSIVE DESIGN SYSTEM — TableBank
-   Mobile-first. Breakpoints: 640 (tablet), 1024 (desktop)
-═══════════════════════════════════════════════════════════════════ */
-
-/* ── Mobile base fixes (< 640px) ── */
-@media (max-width: 639px) {
-  #header-inner { padding: 0; }
-  #nav { gap: 2px; }
-  .nav-btn { padding: 6px 9px; font-size: 12px; }
-  #content { padding: 16px 14px; }
-  .stat-grid { grid-template-columns: repeat(2, 1fr); }
-  .page-title { font-size: 18px; }
-  .row { padding: 12px 14px; gap: 8px; }
-  .row-right { gap: 8px; }
-  .card { padding: 16px; }
-  #modal-box { padding: 20px 18px; min-width: 0; }
-  .page-head { margin-bottom: 16px; }
-}
-
-/* ── Tablet (640px+) ── */
-@media (min-width: 640px) {
-  #content { padding: 28px 24px; }
-  .stat-grid { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; }
-  .page-title { font-size: 24px; }
-  .card { padding: 24px 26px; }
-  #modal-box { max-width: 540px; padding: 30px 32px; }
-  .row { padding: 16px 20px; }
-}
-
-/* ── Desktop (1024px+) ── */
-@media (min-width: 1024px) {
-  /* Wider content column */
-  #header-inner { max-width: 1200px; }
-  #content { max-width: 1200px; padding: 36px 40px; }
-
-  /* Groups page: list becomes 2-col cards */
-  #content .row-list { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  #content .row-list .row { margin-bottom: 0; }
-
-  /* Stat boxes more spacious */
-  .stat-grid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px; }
-  .stat-value { font-size: 22px; }
-
-  /* Nav gets more space */
-  .nav-btn { padding: 8px 18px; font-size: 14px; }
-  #logo-title { font-size: 20px; }
-
-  /* Modal wider */
-  #modal-box { max-width: 580px; padding: 34px 36px; }
-
-  /* Better page heading */
-  .page-title { font-size: 26px; }
-  .page-head { margin-bottom: 28px; }
-
-  /* Cards more spacious */
-  .card { padding: 26px 30px; }
-}
-
-/* ── Large desktop (1400px+) ── */
-@media (min-width: 1400px) {
-  #header-inner { max-width: 1400px; }
-  #content { max-width: 1400px; padding: 40px 60px; }
-  .stat-grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
-}
-
   </style>
 </head>
 <body>
@@ -338,13 +271,13 @@
 <div id="header">
   <div id="header-inner">
     <div id="logo" onclick="navigate('groups')">
-      <div id="logo-title">TableBank</div>
-      <div id="logo-sub">Group Finance Manager</div>
+      <div id="logo-title">Table Bank</div>
+      <div id="logo-sub">Groups' Finance Manager</div>
     </div>
     <div id="nav">
       <button class="nav-btn" data-nav="groups"  onclick="navigate('groups')">Groups</button>
       <button class="nav-btn" data-nav="search"  onclick="navigate('search')">Search</button>
-      <button class="nav-btn" data-nav="totals"  onclick="navigate('totals')">All Totals</button>
+      <button class="nav-btn" data-nav="totals"  onclick="navigate('totals')">Totals</button>
     </div>
   </div>
 </div>
@@ -364,7 +297,7 @@
 
 <!-- Install banner -->
 <div id="install-banner">
-  <span>Install TableBank for offline use</span>
+  <span>Install Table Bank</span>
   <button id="install-yes">Install</button>
   <button id="install-no">×</button>
 </div>
@@ -762,7 +695,7 @@ function renderGroupPage(gid) {
   const wrap = el('div', {});
 
   // Back link
-  const back = el('button', { class: 'back-link' });
+  const back = el('button', { class: 'back-link', style: 'font-size: 20px' });
   back.appendChild(svgBack());
   back.appendChild(document.createTextNode(' All Groups'));
   back.addEventListener('click', () => navigate('groups'));
@@ -1181,8 +1114,8 @@ function renderMemberModalBody(container, msId) {
     if (type === 'SW' && amount > fc.shares)  { txnErr.textContent = 'Withdrawal exceeds available shares.'; txnErr.style.display = ''; return; }
     freshMs.transactions.push({ id: uid(), date: new Date().toISOString(), type, amount, note: noteInp.value.trim() });
     saveState();
-    closeModal();
-    toast('✓ Transaction recorded');
+    renderMemberModalBody(document.getElementById('modal-body'), msId);
+    document.getElementById('modal-box').scrollTop = 0;
   });
 
   panelStandard.append(
@@ -1311,8 +1244,8 @@ function renderMemberModalBody(container, msId) {
 
       for (const t of txns) freshMs.transactions.push(t);
       saveState();
-      closeModal();
-      toast('✓ Repayment applied');
+      renderMemberModalBody(document.getElementById('modal-body'), msId);
+      document.getElementById('modal-box').scrollTop = 0;
     });
 
     panel.append(
@@ -1624,92 +1557,8 @@ function openDividendModal(gid) {
 // ─────────────────────────────────────────────────────────────────────────────
 // BOOT
 // ─────────────────────────────────────────────────────────────────────────────
-
-function toast(msg, ms) {
-  let t = document.getElementById('tb-toast');
-  if (!t) {
-    t = document.createElement('div');
-    t.id = 'tb-toast';
-    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(8px);background:#1a1a1a;color:#fff;padding:9px 20px;border-radius:100px;font-size:13px;font-weight:600;opacity:0;transition:all 0.22s;z-index:9999;pointer-events:none;white-space:nowrap;';
-    document.body.appendChild(t);
-  }
-  t.textContent = msg;
-  t.style.opacity = '1';
-  t.style.transform = 'translateX(-50%) translateY(0)';
-  clearTimeout(t._to);
-  t._to = setTimeout(() => { t.style.opacity='0'; t.style.transform='translateX(-50%) translateY(8px)'; }, ms || 2200);
-}
-
 applyMonthlyInterest();
 navigate('groups');
-// ─────────────────────────────────────────────────────────────────────────────
-// BACK NAVIGATION + SWIPE BACK
-// ─────────────────────────────────────────────────────────────────────────────
-let navHistory = [];
-const _origNavigate = navigate;
-function navigate(name, params) {
-  if (currentPage.name && currentPage.name !== name) {
-    navHistory.push({ name: currentPage.name, ...currentPage });
-    if (navHistory.length > 20) navHistory.shift();
-  }
-  _origNavigate(name, params || {});
-}
-function goBack() {
-  if (document.getElementById('modal-overlay').classList.contains('open')) {
-    closeModal(); return;
-  }
-  if (navHistory.length > 0) {
-    const prev = navHistory.pop();
-    _origNavigate(prev.name, prev);
-  }
-}
-
-// Swipe-back (right edge swipe)
-(function(){
-  let sx=0, sy=0;
-  document.addEventListener('touchstart', e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;}, {passive:true});
-  document.addEventListener('touchend', e=>{
-    const dx=e.changedTouches[0].clientX-sx;
-    const dy=e.changedTouches[0].clientY-sy;
-    if(dx>60 && Math.abs(dy)<80 && sx<44) goBack();
-  }, {passive:true});
-})();
-
-// ─────────────────────────────────────────────────────────────────────────────
-// INSTALL PROMPT
-// ─────────────────────────────────────────────────────────────────────────────
-(function(){
-  let deferredEvt = null;
-  
-  // Inject install banner CSS + HTML
-  const css = document.createElement('style');
-  css.textContent = '.tb-inst{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);width:calc(100% - 32px);max-width:500px;background:var(--green);color:#fff;border-radius:10px;padding:13px 15px;display:flex;align-items:center;gap:11px;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,0.3);animation:tbiu 0.3s ease;}.tb-inst.hidden{display:none;}@keyframes tbiu{from{transform:translateX(-50%) translateY(14px);opacity:0;}to{transform:translateX(-50%) translateY(0);opacity:1;}}.tb-inst-ico{font-size:24px;flex-shrink:0;}.tb-inst-txt{flex:1;}.tb-inst-ttl{font-size:13px;font-weight:700;}.tb-inst-sub{font-size:11px;opacity:0.7;margin-top:1px;}.tb-inst-btn{background:#fff;color:var(--green);border:none;border-radius:7px;padding:7px 13px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;}.tb-inst-x{background:none;border:none;color:rgba(255,255,255,0.5);font-size:17px;cursor:pointer;padding:2px 5px;}';
-  document.head.appendChild(css);
-  
-  const banner = document.createElement('div');
-  banner.className = 'tb-inst hidden';
-  banner.id = 'tb-inst';
-  banner.innerHTML = '<div class="tb-inst-ico">📲</div><div class="tb-inst-txt"><div class="tb-inst-ttl">Install TableBank</div><div class="tb-inst-sub">Add to home screen — works offline</div></div><button class="tb-inst-btn" id="tb-inst-btn">Install</button><button class="tb-inst-x" id="tb-inst-x">✕</button>';
-  document.body.appendChild(banner);
-  
-  window.addEventListener('beforeinstallprompt', e => {
-    e.preventDefault(); deferredEvt = e;
-    if (!localStorage.getItem('tb_install_dismissed')) {
-      setTimeout(() => banner.classList.remove('hidden'), 2500);
-    }
-  });
-  document.getElementById('tb-inst-btn').addEventListener('click', () => {
-    if (!deferredEvt) return;
-    deferredEvt.prompt();
-    deferredEvt.userChoice.then(() => { banner.classList.add('hidden'); deferredEvt=null; });
-  });
-  document.getElementById('tb-inst-x').addEventListener('click', () => {
-    banner.classList.add('hidden');
-    localStorage.setItem('tb_install_dismissed','1');
-  });
-  window.addEventListener('appinstalled', () => { banner.classList.add('hidden'); toast('✓ TableBank installed!'); });
-})();
-
 </script>
 </body>
 </html>

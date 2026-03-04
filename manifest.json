@@ -1,7 +1,7 @@
 {
-  "name": "TableBank",
+  "name": "Table Bank",
   "short_name": "TableBank",
-  "description": "Group Table Banking Finance Manager",
+  "description": "Groups' Table Banking Finance Manager",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f5f5f0",
@@ -21,6 +21,6 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["finance", "productivity"],
+  "categories": ["finance", "productivity", "management", "banking"],
   "lang": "en-KE"
 }
